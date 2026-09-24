@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Arena Angka</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg1:#3730A3; --bg2:#7C3AED;
+  --card:#ffffff; --ink:#1E1B4B; --ink-soft:#5B5580;
+  --coral:#FF5D73; --sun:#FFC53D; --mint:#2DD4BF; --grape:#A78BFA;
+  --ok:#22C55E; --bad:#EF4444;
+  --r:22px;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{
+  height:100%;margin:0;font-family:'Nunito',sans-serif;color:var(--ink);
+  background:radial-gradient(circle at 20% 0%, var(--bg2), var(--bg1) 60%);
+  display:flex;align-items:center;justify-content:center;padding:20px;
+}
+h1,h2,h3,.title-font{font-family:'Baloo 2',sans-serif}
+.stage{width:100%;max-width:480px}
+.card{
+  background:var(--card);border-radius:var(--r);
+  padding:26px 22px;box-shadow:0 18px 40px rgba(30,27,75,.35);
+}
+.badge{display:inline-block;background:var(--sun);color:var(--ink);font-family:'Baloo 2';font-weight:700;
+  padding:5px 14px;border-radius:999px;font-size:.85rem;margin-bottom:10px}
+h1{font-size:1.7rem;margin:4px 0 2px;color:#fff;text-align:center;text-shadow:0 3px 0 rgba(0,0,0,.15)}
+.sub{color:#E9E5FF;text-align:center;margin:0 0 20px;font-weight:700}
+label{font-weight:800;font-size:.9rem;color:var(--ink-soft);display:block;margin:12px 0 6px}
+input[type=text],input[type=email]{
+  width:100%;padding:12px 14px;border-radius:14px;border:2px solid #E5E1FA;font-size:1rem;font-family:'Nunito';
+  font-weight:700;color:var(--ink);
+}
+input:focus{outline:none;border-color:var(--grape)}
+.levels{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+.lvl-btn{
+  border:none;border-radius:18px;padding:16px 10px;font-family:'Baloo 2';font-weight:700;font-size:1rem;
+  color:#fff;cursor:pointer;text-align:left;line-height:1.25;box-shadow:0 6px 0 rgba(0,0,0,.18);
+  transition:transform .08s;
+}
+.lvl-btn:active{transform:translateY(4px);box-shadow:0 2px 0 rgba(0,0,0,.18)}
+.lvl-btn span{display:block;font-family:'Nunito';font-weight:700;font-size:.75rem;opacity:.9;margin-top:3px}
+.l1{background:var(--coral)} .l2{background:var(--mint)} .l3{background:var(--grape)} .l4{background:#3B82F6}
+.top-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.pill{background:#F1EEFF;color:var(--ink);font-weight:800;padding:6px 12px;border-radius:999px;font-size:.85rem}
+.timerbar{height:10px;background:#EFEBFF;border-radius:999px;overflow:hidden;margin-bottom:18px}
+.timerfill{height:100%;background:var(--sun);width:100%;transform-origin:left}
+.qtext{font-family:'Baloo 2';font-size:2rem;text-align:center;margin:10px 0 22px}
+.answers{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.answers.yn{grid-template-columns:1fr 1fr}
+.ans-btn{
+  padding:16px 8px;border-radius:16px;border:2px solid #EEEBFF;background:#FAF9FF;font-family:'Baloo 2';
+  font-size:1.3rem;font-weight:700;color:var(--ink);cursor:pointer;
+}
+.ans-btn.correct{background:var(--ok);border-color:var(--ok);color:#fff}
+.ans-btn.wrong{background:var(--bad);border-color:var(--bad);color:#fff}
+.iconbtn{background:none;border:none;font-size:1.3rem;cursor:pointer;color:#fff;opacity:.9}
+.center{text-align:center}
+.big-score{font-family:'Baloo 2';font-size:3rem;margin:6px 0;color:var(--grape)}
+.result-line{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed #E5E1FA;font-weight:800}
+.btn-primary{
+  width:100%;padding:15px;border:none;border-radius:16px;background:var(--grape);color:#fff;
+  font-family:'Baloo 2';font-size:1.1rem;font-weight:700;cursor:pointer;margin-top:16px;box-shadow:0 6px 0 #7C4FE0;
+}
+.btn-primary:active{transform:translateY(4px);box-shadow:none}
+.btn-secondary{
+  width:100%;padding:13px;border:2px solid #E5E1FA;border-radius:16px;background:#fff;color:var(--ink-soft);
+  font-family:'Baloo 2';font-weight:700;cursor:pointer;margin-top:10px;
+}
+.hidden{display:none !important}
+.confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:50}
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <div id="screen-start" class="card">
+    <div class="top-row"><span class="badge">Arena Angka 🚀</span>
+      <button class="iconbtn" id="musicToggle" style="color:var(--ink)" title="Musik">🔈</button>
+    </div>
+    <h2 style="margin:0 0 4px">Siap latihan kilat?</h2>
+    <p style="color:var(--ink-soft);margin-top:0">Kuasai perkalian &amp; pembagian sebelum masuk ke KPK!</p>
+    <label>Nama kamu</label>
+    <input type="text" id="playerName" placeholder="Tulis namamu">
+    <p style="color:var(--ink-soft);font-weight:700;font-size:.85rem;margin:10px 0 0">📧 Hasil akan dikirim ke Bu Gita otomatis setelah selesai.</p>
+    <label style="margin-top:18px">Pilih level</label>
+    <div class="levels">
+      <button class="lvl-btn l1" data-level="1">Level 1<span>Perkalian 1–10</span></button>
+      <button class="lvl-btn l2" data-level="2">Level 2<span>Pembagian</span></button>
+      <button class="lvl-btn l3" data-level="3">Level 3<span>Habis dibagi?</span></button>
+      <button class="lvl-btn l4" data-level="4">Level 4<span>Kelipatan</span></button>
+    </div>
+  </div>
+
+  <div id="screen-game" class="card hidden">
+    <div class="top-row">
+      <span class="pill" id="qCounter">Soal 1/12</span>
+      <span class="pill" id="scorePill">⭐ 0</span>
+    </div>
+    <div class="timerbar"><div class="timerfill" id="timerfill"></div></div>
+    <div class="qtext" id="qtext">7 × 8 = ?</div>
+    <div class="answers" id="answers"></div>
+  </div>
+
+  <div id="screen-result" class="card hidden center">
+    <div class="badge">Selesai!</div>
+    <h2 id="resultTitle">Kerja bagus, Bintang!</h2>
+    <div class="big-score" id="finalScore">0</div>
+    <div style="text-align:left;margin-top:10px">
+      <div class="result-line"><span>Jawaban benar</span><span id="rCorrect">0/12</span></div>
+      <div class="result-line"><span>Waktu</span><span id="rTime">0 detik</span></div>
+      <div class="result-line"><span>Level</span><span id="rLevel">-</span></div>
+    </div>
+    <button class="btn-primary" id="btnEmail">📧 Mengirim hasil...</button>
+    <button class="btn-secondary" id="btnAgain">Main Lagi</button>
+    <button class="btn-secondary" id="btnMenu">Pilih Level Lain</button>
+  </div>
+
+</div>
+
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzwy2lV6AcY66Cxu2mqa7WWnWygNzd3xO3lt8MLf--m9lIQMn_g96H68P3j9Sw_M2E1/exec";
+// ---------- Audio (synth, no external files) ----------
+let actx=null, musicOn=false, musicNodes=[];
+function getCtx(){ if(!actx){ try{actx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){return null;} } return actx; }
+function tone(freq,dur,type,vol){
+  const ctx=getCtx(); if(!ctx) return;
+  const o=ctx.createOscillator(), g=ctx.createGain();
+  o.type=type||'sine'; o.frequency.value=freq;
+  g.gain.value=0; o.connect(g); g.connect(ctx.destination);
+  const t=ctx.currentTime;
+  g.gain.linearRampToValueAtTime(vol||0.15,t+0.02);
+  g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+  o.start(t); o.stop(t+dur+0.02);
+}
+function playCorrect(){ tone(523,0.12,'triangle'); setTimeout(()=>tone(784,0.18,'triangle'),90); }
+function playWrong(){ tone(160,0.28,'sawtooth',0.12); }
+function playWin(){ [523,659,784,1046].forEach((f,i)=>setTimeout(()=>tone(f,0.22,'triangle'),i*110)); }
+
+function startMusic(){
+  const ctx=getCtx(); if(!ctx||musicOn) return; musicOn=true;
+  const notes=[392,440,523,659,523,440]; let i=0;
+  function loop(){
+    if(!musicOn) return;
+    tone(notes[i%notes.length],0.35,'sine',0.045);
+    i++; musicNodes.push(setTimeout(loop,380));
+  }
+  loop();
+}
+function stopMusic(){ musicOn=false; musicNodes.forEach(clearTimeout); musicNodes=[]; }
+document.getElementById('musicToggle').onclick=function(){
+  if(musicOn){ stopMusic(); this.textContent='🔈'; }
+  else{ startMusic(); this.textContent='🔊'; }
+};
+
+// ---------- Question generators ----------
+function rnd(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+
+function genL1(){
+  const hard=[6,7,8,9]; const a = Math.random()<0.6 ? hard[rnd(0,3)] : rnd(1,10);
+  const b = rnd(2,10); const ans=a*b;
+  return mcq(`${a} × ${b} = ?`, ans, ()=>rnd(Math.max(1,ans-15),ans+15));
+}
+function genL2(){
+  const b=rnd(2,9), a=rnd(2,9), c=a*b; const ans=a;
+  return mcq(`${c} ÷ ${b} = ?`, ans, ()=>rnd(1,12));
+}
+function genL3(){
+  const div=rnd(2,10);
+  const makeHabis = Math.random()<0.5;
+  const n = makeHabis ? div*rnd(2,10) : div*rnd(2,10)+rnd(1,div-1);
+  const isHabis = n % div === 0;
+  return { qtext:`Apakah ${n} habis dibagi ${div}?`, type:'yn', correct: isHabis };
+}
+function genL4(){
+  const n=rnd(2,9);
+  const isKelipatan = Math.random()<0.5;
+  const x = isKelipatan ? n*rnd(2,12) : n*rnd(2,12)+rnd(1,n-1);
+  const actual = x % n === 0;
+  return { qtext:`Apakah ${x} kelipatan dari ${n}?`, type:'yn', correct: actual };
+}
+function mcq(qtext, correctVal, distractorFn){
+  const opts=new Set([correctVal]);
+  while(opts.size<4){ const d=distractorFn(); if(d>=0) opts.add(d); }
+  return { qtext, type:'mcq', correct: correctVal, options: shuffle([...opts]) };
+}
+
+const LEVELS = {1:genL1, 2:genL2, 3:genL3, 4:genL4};
+const LEVEL_NAMES = {1:'Perkalian', 2:'Pembagian', 3:'Habis Dibagi', 4:'Kelipatan'};
+const TOTAL_Q = 12, TIME_PER_Q = 7000;
+
+// ---------- Game state ----------
+let state={};
+function startGame(level){
+  state={level, idx:0, score:0, correct:0, startTime:Date.now(), timerHandle:null, questions:Array.from({length:TOTAL_Q},()=>LEVELS[level]())};
+  show('screen-game'); nextQuestion();
+}
+function nextQuestion(){
+  clearTimeout(state.timerHandle);
+  if(state.idx>=TOTAL_Q){ finishGame(); return; }
+  const q=state.questions[state.idx];
+  document.getElementById('qCounter').textContent=`Soal ${state.idx+1}/${TOTAL_Q}`;
+  document.getElementById('scorePill').textContent=`⭐ ${state.score}`;
+  document.getElementById('qtext').textContent=q.qtext;
+  const box=document.getElementById('answers'); box.innerHTML='';
+  box.className = q.type==='yn' ? 'answers yn' : 'answers';
+  if(q.type==='mcq'){
+    q.options.forEach(v=>{
+      const b=document.createElement('button'); b.className='ans-btn'; b.textContent=v;
+      b.onclick=()=>answer(b, v===q.correct); box.appendChild(b);
+    });
+  } else {
+    const yes=document.createElement('button'); yes.className='ans-btn'; yes.textContent='Ya ✔️';
+    yes.onclick=()=>answer(yes, q.correct===true);
+    const no=document.createElement('button'); no.className='ans-btn'; no.textContent='Tidak ✖️';
+    no.onclick=()=>answer(no, q.correct===false);
+    box.appendChild(yes); box.appendChild(no);
+  }
+  const fill=document.getElementById('timerfill');
+  fill.style.transition='none'; fill.style.width='100%';
+  requestAnimationFrame(()=>{ fill.style.transition=`width ${TIME_PER_Q}ms linear`; fill.style.width='0%'; });
+  state.timerHandle=setTimeout(()=>answer(null,false), TIME_PER_Q);
+}
+function answer(btnEl, isCorrect){
+  clearTimeout(state.timerHandle);
+  [...document.getElementById('answers').children].forEach(b=>b.disabled=true);
+  if(isCorrect){ state.score+=10; state.correct++; playCorrect(); if(btnEl) btnEl.classList.add('correct'); }
+  else { playWrong(); if(btnEl) btnEl.classList.add('wrong'); }
+  state.idx++;
+  setTimeout(nextQuestion, 550);
+}
+function finishGame(){
+  const seconds=Math.round((Date.now()-state.startTime)/1000);
+  document.getElementById('finalScore').textContent=state.score;
+  document.getElementById('rCorrect').textContent=`${state.correct}/${TOTAL_Q}`;
+  document.getElementById('rTime').textContent=`${seconds} detik`;
+  document.getElementById('rLevel').textContent=`Level ${state.level} · ${LEVEL_NAMES[state.level]}`;
+  const title=document.getElementById('resultTitle');
+  title.textContent = state.correct===TOTAL_Q ? 'Sempurna, Juara! 🏆' : state.correct>=TOTAL_Q*0.7 ? 'Kerja Bagus, Bintang! 🌟' : 'Terus Berlatih, Kamu Bisa! 💪';
+  playWin();
+  show('screen-result');
+  state.lastSeconds=seconds;
+  sendResult(seconds);
+}
+function sendResult(seconds){
+  const name=document.getElementById('playerName').value.trim()||'Siswa';
+  const btn=document.getElementById('btnEmail');
+  btn.textContent='⏳ Mengirim hasil...'; btn.disabled=true;
+  const fields={ name, level:state.level, score:state.score, correct:state.correct, total:TOTAL_Q, time:`${seconds} detik` };
+  try{
+    let frame=document.getElementById('hiddenFrame');
+    if(!frame){ frame=document.createElement('iframe'); frame.name='hiddenFrame'; frame.id='hiddenFrame'; frame.style.display='none'; document.body.appendChild(frame); }
+    const form=document.createElement('form');
+    form.method='POST'; form.action=SCRIPT_URL; form.target='hiddenFrame'; form.style.display='none';
+    Object.keys(fields).forEach(k=>{
+      const input=document.createElement('input'); input.type='hidden'; input.name=k; input.value=fields[k];
+      form.appendChild(input);
+    });
+    document.body.appendChild(form);
+    form.submit();
+    setTimeout(()=>form.remove(),3000);
+    setTimeout(()=>{ btn.textContent='✅ Hasil sudah terkirim ke guru'; }, 1200);
+  }catch(err){
+    btn.textContent='⚠️ Gagal kirim, coba lagi'; btn.disabled=false;
+  }
+}
+
+// ---------- Manual retry ----------
+document.getElementById('btnEmail').onclick=function(){
+  if(this.disabled) return;
+  sendResult(state.lastSeconds);
+};
+
+// ---------- Nav ----------
+function show(id){ ['screen-start','screen-game','screen-result'].forEach(s=>document.getElementById(s).classList.toggle('hidden', s!==id)); }
+document.querySelectorAll('.lvl-btn').forEach(b=>b.onclick=()=>{ getCtx(); startGame(parseInt(b.dataset.level)); });
+document.getElementById('btnAgain').onclick=()=>startGame(state.level);
+document.getElementById('btnMenu').onclick=()=>show('screen-start');
+
+// persist name/email conveniently per viewer
+try{
+  const n=localStorage.getItem('aa_name');
+  if(n) document.getElementById('playerName').value=n;
+  document.getElementById('playerName').addEventListener('change',ev=>{ try{localStorage.setItem('aa_name',ev.target.value);}catch(_){} });
+}catch(_){}
+</script>
+</body>
+</html>
