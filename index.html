@@ -44,9 +44,11 @@ input:focus{outline:none;border-color:var(--grape)}
 .lvl-btn{
   border:none;border-radius:18px;padding:16px 10px;font-family:'Baloo 2';font-weight:700;font-size:1rem;
   color:#fff;cursor:pointer;text-align:left;line-height:1.25;box-shadow:0 6px 0 rgba(0,0,0,.18);
-  transition:transform .08s;
+  transition:transform .08s, opacity .2s;
+  position:relative;
 }
-.lvl-btn:active{transform:translateY(4px);box-shadow:0 2px 0 rgba(0,0,0,.18)}
+.lvl-btn:active:not(.locked){transform:translateY(4px);box-shadow:0 2px 0 rgba(0,0,0,.18)}
+.lvl-btn.locked{opacity:.5;cursor:not-allowed;box-shadow:none;filter:grayscale(0.6)}
 .lvl-btn span{display:block;font-family:'Nunito';font-weight:700;font-size:.75rem;opacity:.9;margin-top:3px}
 .l1{background:var(--coral)} .l2{background:var(--mint)} .l3{background:var(--grape)} .l4{background:#3B82F6}
 .top-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
@@ -76,10 +78,25 @@ input:focus{outline:none;border-color:var(--grape)}
   font-family:'Baloo 2';font-weight:700;cursor:pointer;margin-top:10px;
 }
 .hidden{display:none !important}
-.confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:50}
+.status-msg{
+  margin:14px 0 6px;padding:12px;border-radius:14px;font-weight:800;font-size:.9rem;
+}
+.status-msg.pass{background:#DCFCE7;color:#15803D;border:1px solid #86EFAC}
+.status-msg.fail{background:#FEE2E2;color:#B91C1C;border:1px solid #FCA5A5}
+
+/* Confetti animation */
+.confetti-piece {
+  position: absolute;width: 10px;height: 10px;background: #ffd300;top: 0;
+  opacity: 0;animation: confetti-fall 3s ease-out infinite;
+}
+@keyframes confetti-fall {
+  0% { opacity: 1; top: -10px; transform: translateX(0) rotate(0deg); }
+  100% { opacity: 0; top: 100%; transform: translateX(100px) rotate(360deg); }
+}
 </style>
 </head>
 <body>
+<div id="confettiContainer" class="hidden"></div>
 <div class="stage">
 
   <div id="screen-start" class="card">
@@ -93,10 +110,10 @@ input:focus{outline:none;border-color:var(--grape)}
     <p style="color:var(--ink-soft);font-weight:700;font-size:.85rem;margin:10px 0 0">📧 Hasil akan dikirim ke Bu Gita otomatis setelah selesai.</p>
     <label style="margin-top:18px">Pilih level</label>
     <div class="levels">
-      <button class="lvl-btn l1" data-level="1">Level 1<span>Perkalian 1–10</span></button>
-      <button class="lvl-btn l2" data-level="2">Level 2<span>Pembagian</span></button>
-      <button class="lvl-btn l3" data-level="3">Level 3<span>Habis dibagi?</span></button>
-      <button class="lvl-btn l4" data-level="4">Level 4<span>Kelipatan</span></button>
+      <button class="lvl-btn l1" data-level="1">Level 1<span id="sub-l1">Perkalian 1–10</span></button>
+      <button class="lvl-btn l2 locked" data-level="2">Level 2<span id="sub-l2">🔒 Terkunci</span></button>
+      <button class="lvl-btn l3 locked" data-level="3">Level 3<span id="sub-l3">🔒 Terkunci</span></button>
+      <button class="lvl-btn l4 locked" data-level="4">Level 4<span id="sub-l4">🔒 Terkunci</span></button>
     </div>
   </div>
 
@@ -114,6 +131,10 @@ input:focus{outline:none;border-color:var(--grape)}
     <div class="badge">Selesai!</div>
     <h2 id="resultTitle">Kerja bagus, Bintang!</h2>
     <div class="big-score" id="finalScore">0</div>
+    
+    <!-- Status Pesan KKM -->
+    <div id="statusBox" class="status-msg pass"></div>
+
     <div style="text-align:left;margin-top:10px">
       <div class="result-line"><span>Jawaban benar</span><span id="rCorrect">0/12</span></div>
       <div class="result-line"><span>Waktu</span><span id="rTime">0 detik</span></div>
@@ -127,8 +148,44 @@ input:focus{outline:none;border-color:var(--grape)}
 </div>
 
 <script>
-// URL Apps Script Baru dengan akses /exec
+// URL Apps Script Baru dengan akses /exec (TIDAK DIUBAH SAMA SEKALI)
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwJ33JE_GNMHq9mqNRwqW5HH628Nk9mogjkNU5ejyncB-HZid17MzP1yhN-oW3-K32P/exec";
+
+// ---------- Sistem Level & KKM ----------
+let maxUnlockedLevel = parseInt(localStorage.getItem('aa_unlocked_level')) || 1;
+
+function updateLevelUI(){
+  for(let i=1; i<=4; i++){
+    const btn = document.querySelector(`.lvl-btn.l${i}`);
+    const sub = document.getElementById(`sub-l${i}`);
+    if(i <= maxUnlockedLevel){
+      btn.classList.remove('locked');
+      if(i===1) sub.textContent = 'Perkalian 1–10';
+      if(i===2) sub.textContent = 'Pembagian';
+      if(i===3) sub.textContent = 'Habis dibagi?';
+      if(i===4) sub.textContent = 'Kelipatan';
+    } else {
+      btn.classList.add('locked');
+      sub.textContent = '🔒 Terkunci (Selesaikan Level ' + (i-1) + ')';
+    }
+  }
+}
+
+function triggerConfetti() {
+  const container = document.getElementById('confettiContainer');
+  container.innerHTML = '';
+  container.classList.remove('hidden');
+  const colors = ['#FF5D73', '#FFC53D', '#2DD4BF', '#A78BFA', '#22C55E'];
+  for (let i = 0; i < 40; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = Math.random() * 100 + '%';
+    piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+    piece.style.animationDelay = Math.random() * 2 + 's';
+    container.appendChild(piece);
+  }
+  setTimeout(() => container.classList.add('hidden'), 4000);
+}
 
 // ---------- Audio (synth, no external files) ----------
 let actx=null, musicOn=false, musicNodes=[];
@@ -203,6 +260,7 @@ const TOTAL_Q = 12, TIME_PER_Q = 7000;
 // ---------- Game state ----------
 let state={};
 function startGame(level){
+  if(level > maxUnlockedLevel) return;
   state={level, idx:0, score:0, correct:0, startTime:Date.now(), timerHandle:null, questions:Array.from({length:TOTAL_Q},()=>LEVELS[level]())};
   show('screen-game'); nextQuestion();
 }
@@ -240,15 +298,48 @@ function answer(btnEl, isCorrect){
   state.idx++;
   setTimeout(nextQuestion, 550);
 }
+
 function finishGame(){
   const seconds=Math.round((Date.now()-state.startTime)/1000);
   document.getElementById('finalScore').textContent=state.score;
   document.getElementById('rCorrect').textContent=`${state.correct}/${TOTAL_Q}`;
   document.getElementById('rTime').textContent=`${seconds} detik`;
   document.getElementById('rLevel').textContent=`Level ${state.level} · ${LEVEL_NAMES[state.level]}`;
-  const title=document.getElementById('resultTitle');
-  title.textContent = state.correct===TOTAL_Q ? 'Sempurna, Juara! 🏆' : state.correct>=TOTAL_Q*0.7 ? 'Kerja Bagus, Bintang! 🌟' : 'Terus Berlatih, Kamu Bisa! 💪';
-  playWin();
+  
+  const statusBox = document.getElementById('statusBox');
+  const btnMenu = document.getElementById('btnMenu');
+  const btnAgain = document.getElementById('btnAgain');
+  const title = document.getElementById('resultTitle');
+
+  // Evaluasi KKM (Nilai Sempurna = 120)
+  if(state.score >= 120){
+    title.textContent = 'Sempurna, Juara! 🏆';
+    statusBox.className = "status-msg pass";
+    
+    if(state.level < 4){
+      statusBox.innerHTML = "🎉 <b>SELAMAT! Nilaimu 120 (Tuntas)</b><br>Kamu berhasil membuka Level " + (state.level + 1) + "!";
+      if(state.level >= maxUnlockedLevel){
+        maxUnlockedLevel = state.level + 1;
+        localStorage.setItem('aa_unlocked_level', maxUnlockedLevel);
+      }
+    } else {
+      statusBox.innerHTML = "🏆 <b>LUAR BIASA!</b> Kamu telah menuntaskan seluruh Level!";
+    }
+    
+    triggerConfetti();
+    playWin();
+    btnMenu.classList.remove('hidden');
+    btnAgain.textContent = 'Main Lagi';
+  } else {
+    title.textContent = 'Belum Tuntas! 💪';
+    statusBox.className = "status-msg fail";
+    statusBox.innerHTML = "⚠️ <b>Nilaimu " + state.score + " (Kurang dari 120)</b><br>Kamu wajib menjawab semua soal dengan benar untuk membuka level selanjutnya. Yuk coba lagi!";
+    
+    playWrong();
+    btnMenu.classList.add('hidden'); // Sembunyikan menu pilih level lain agar anak mengulang
+    btnAgain.textContent = 'Ulangi Level Ini 🔄';
+  }
+
   show('screen-result');
   state.lastSeconds=seconds;
   sendResult(seconds);
@@ -300,10 +391,24 @@ document.getElementById('btnEmail').onclick=function(){
 };
 
 // ---------- Nav ----------
-function show(id){ ['screen-start','screen-game','screen-result'].forEach(s=>document.getElementById(s).classList.toggle('hidden', s!==id)); }
-document.querySelectorAll('.lvl-btn').forEach(b=>b.onclick=()=>{ getCtx(); startGame(parseInt(b.dataset.level)); });
+function show(id){ 
+  ['screen-start','screen-game','screen-result'].forEach(s=>document.getElementById(s).classList.toggle('hidden', s!==id)); 
+  if(id==='screen-start') updateLevelUI();
+}
+
+document.querySelectorAll('.lvl-btn').forEach(b=>b.onclick=()=>{ 
+  const lvl = parseInt(b.dataset.level);
+  if(lvl <= maxUnlockedLevel){
+    getCtx(); 
+    startGame(lvl); 
+  }
+});
+
 document.getElementById('btnAgain').onclick=()=>startGame(state.level);
 document.getElementById('btnMenu').onclick=()=>show('screen-start');
+
+// Inisialisasi awal
+updateLevelUI();
 
 // Persist nama di browser lokal
 try{
