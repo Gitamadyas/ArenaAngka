@@ -127,7 +127,9 @@ input:focus{outline:none;border-color:var(--grape)}
 </div>
 
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby0DMlLaAQFzm_zrEDeFZqQjhDfjpfV-38u9GnoIeTS-JZu8ZWC_4oJoQ120uKpu-2F/exec";
+// URL Apps Script Baru dengan akses /exec
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwJ33JE_GNMHq9mqNRwqW5HH628Nk9mogjkNU5ejyncB-HZid17MzP1yhN-oW3-K32P/exec";
+
 // ---------- Audio (synth, no external files) ----------
 let actx=null, musicOn=false, musicNodes=[];
 function getCtx(){ if(!actx){ try{actx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){return null;} } return actx; }
@@ -251,6 +253,8 @@ function finishGame(){
   state.lastSeconds=seconds;
   sendResult(seconds);
 }
+
+// ---------- Send Data to Google Apps Script ----------
 function sendResult(seconds){
   const name=document.getElementById('playerName').value.trim()||'Siswa';
   const btn=document.getElementById('btnEmail');
@@ -258,17 +262,32 @@ function sendResult(seconds){
   const fields={ name, level:state.level, score:state.score, correct:state.correct, total:TOTAL_Q, time:`${seconds} detik` };
   try{
     let frame=document.getElementById('hiddenFrame');
-    if(!frame){ frame=document.createElement('iframe'); frame.name='hiddenFrame'; frame.id='hiddenFrame'; frame.style.display='none'; document.body.appendChild(frame); }
+    if(!frame){ 
+      frame=document.createElement('iframe'); 
+      frame.name='hiddenFrame'; 
+      frame.id='hiddenFrame'; 
+      frame.style.display='none'; 
+      document.body.appendChild(frame); 
+    }
     const form=document.createElement('form');
-    form.method='POST'; form.action=SCRIPT_URL; form.target='hiddenFrame'; form.style.display='none';
+    form.method='POST'; 
+    form.action=SCRIPT_URL; 
+    form.target='hiddenFrame'; 
+    form.style.display='none';
+    
     Object.keys(fields).forEach(k=>{
-      const input=document.createElement('input'); input.type='hidden'; input.name=k; input.value=fields[k];
+      const input=document.createElement('input'); 
+      input.type='hidden'; 
+      input.name=k; 
+      input.value=fields[k];
       form.appendChild(input);
     });
+    
     document.body.appendChild(form);
     form.submit();
+    
     setTimeout(()=>form.remove(),3000);
-    setTimeout(()=>{ btn.textContent='✅ Hasil sudah terkirim ke guru'; }, 1200);
+    setTimeout(()=>{ btn.textContent='✅ Hasil sudah terkirim ke guru'; }, 1500);
   }catch(err){
     btn.textContent='⚠️ Gagal kirim, coba lagi'; btn.disabled=false;
   }
@@ -286,7 +305,7 @@ document.querySelectorAll('.lvl-btn').forEach(b=>b.onclick=()=>{ getCtx(); start
 document.getElementById('btnAgain').onclick=()=>startGame(state.level);
 document.getElementById('btnMenu').onclick=()=>show('screen-start');
 
-// persist name/email conveniently per viewer
+// Persist nama di browser lokal
 try{
   const n=localStorage.getItem('aa_name');
   if(n) document.getElementById('playerName').value=n;
